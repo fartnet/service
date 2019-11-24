@@ -3,18 +3,10 @@ Web service for flatulence
 
 ## Introduction
 
-We put this project together using Express and [this guide](https://www.freecodecamp.org/news/how-to-enable-es6-and-beyond-syntax-with-node-and-express-68d3e11fe1ab/).
+We put this project together using Python 3.8 and Flask.
 
-To get the project up and running, clone the repository:
+To start the service:
 
-`git clone https://github.com/fartnet/service.git`
-
-Install all of the dependencies:
-
-`npm install`
-
-And start the server:
-
-`npm run dev`
+`env FLASK_APP=src/app.py flask run`
 
 
