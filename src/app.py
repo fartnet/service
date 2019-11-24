@@ -17,10 +17,10 @@ class fartNet:
     def __init__():
         # Load the graph
         tf.reset_default_graph()
-        self.saver = tf.train.import_meta_graph(MODEL_WEIGHTS_META)
+        saver = tf.train.import_meta_graph(MODEL_WEIGHTS_META)
         self.graph = tf.get_default_graph()
         self.sess = tf.InteractiveSession()
-        self.saver.restore(sess, MODEL_WEIGHTS_CKPT)
+        saver.restore(self.sess, MODEL_WEIGHTS_CKPT)
 
     def predict(self):
         # Create 50 random latent vectors z
