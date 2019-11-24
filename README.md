@@ -9,4 +9,4 @@ To start the service:
 
 `env FLASK_APP=src/app.py flask run`
 
-
+The service landing page can be reached at http://localhost:5000
