@@ -1,11 +1,9 @@
 from flask import Flask
+from config import *
 import tensorflow as tf
 import os
 
 app = Flask(__name__)
-
-MODEL_WEIGHTS_META = os.path.expanduser('~/fartnet_weights/infer.meta')
-MODEL_WEIGHTS_CKPT = os.path.expanduser('~/fartnet_weights/model.ckpt')
 
 # Load the graph
 tf.reset_default_graph()
