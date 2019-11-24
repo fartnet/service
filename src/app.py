@@ -26,6 +26,8 @@ class fartNet:
         
         return fart
 
+nn = fartNet()
 @app.route("/")
 def hello():
+    #nn.predict()
     return "Hello, World!"
