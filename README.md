@@ -17,4 +17,4 @@ And start the server:
 
 `npm run dev`
 
-
+To make sure the API is up-and-running, try visiting its landing page at http://localhost:3000
