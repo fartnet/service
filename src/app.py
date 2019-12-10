@@ -9,8 +9,13 @@ app = Flask(__name__)
 # Get the weights from s3 so we can update them on the
 # fly and just reboot the server
 s3 = boto3.resource('s3')
-s3.Bucket(S3_BUCKET).download_file(S3_OBJ_META, MODEL_WEIGHTS_META)
-s3.Bucket(S3_BUCKET).download_file(S3_OBJ_CKPT, MODEL_WEIGHTS_CKPT)
+
+if not os.path.exists(WEIGHTS_DIR + S3_OBJ_META):
+    s3.Bucket(S3_BUCKET).download_file(S3_OBJ_META, WEIGHTS_DIR + S3_OBJ_META)
+if not os.path.exists(WEIGHTS_DIR + S3_OBJ_INDEX):
+    s3.Bucket(S3_BUCKET).download_file(S3_OBJ_INDEX, WEIGHTS_DIR + S3_OBJ_INDEX)
+if not os.path.exists(WEIGHTS_DIR + S3_OBJ_DATA):
+    s3.Bucket(S3_BUCKET).download_file(S3_OBJ_DATA, WEIGHTS_DIR + S3_OBJ_DATA)
 
 class fartNet:
     def __init__():
