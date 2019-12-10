@@ -57,6 +57,7 @@ class fartNet:
 
 nn = fartNet()
 fartdir = '/home/ubuntu/fartnet/generated_farts/'
+global fart_counter
 fart_counter = 0  # should think of a better way to do this that is robust to shutdowns
 @app.route("/")
 def hello():
@@ -65,6 +66,7 @@ def hello():
 @app.route("/getfart" ,methods=['GET'])
 @limiter.limit("1/second", error_message='chill, making you 50 farts already!')
 def get_fart():
+    global fart_counter
     fart_numpy = nn.predict()
     filename = 'fart_%d'%(fart_counter) + '.wav'
     librosa.output.write_wav(fartdir + filename, fart_numpy.ravel(), 16000)
