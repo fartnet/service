@@ -1,6 +1,9 @@
+#from apscheduler.scheduler import Scheduler
+import time
 import threading
 import atexit
 import os
+import natsort
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask import Flask, send_from_directory
@@ -13,7 +16,8 @@ import boto3
 tf.logging.set_verbosity(tf.logging.ERROR)
 
 dataLock = threading.Lock()
-checker_thread = threading.Thread()
+gen_thread = threading.Thread()
+del_thread = threading.Thread()
 
 # Get the weights from s3 so we can update them on the
 # fly and just reboot the server
@@ -35,9 +39,6 @@ class fartNet:
         self.sess = tf.InteractiveSession(config=tf.ConfigProto(allow_soft_placement=True,
                                                                 log_device_placement=True))
         self.saver.restore(self.sess, MODEL_WEIGHTS_CKPT)
-        print('********DEBUG:********')
-        print(MODEL_WEIGHTS_META)
-        print(MODEL_WEIGHTS_CKPT)
 
     def predict(self):
         # Create 50 random latent vectors z
@@ -75,38 +76,58 @@ def create_app():
         global delete_list
         if len(os.listdir(fartdir)) == 0:
             generate_farts()
-        fart_to_fetch = int(sorted(os.listdir(fartdir))[-1][5:-4])  # fart with lowest # in name
+        fart_files = natsort.natsorted(os.listdir(fartdir))
+        fart_to_fetch = int(fart_files[0][5:-4])  # fart with lowest # in name
         filename = 'fart_%d'%(fart_to_fetch) + '.wav'
         delete_list.append(fartdir + filename)
         return send_from_directory(fartdir, filename, as_attachment=True, cache_timeout=0)
 
-    def delete_spent_farts_and_generate_new_farts(): #fartfactory
-        global delete_list
-        if len(delete_list > 0):
-            for wavfile in delete_list:
-                os.remove(wavfile)
-        delete_list = []
-        if len(os.listdir(fartdir)) == 0:
-            last_fart = 0
-        elif len(os.listdir(fartdir)) < 200:
-            last_fart = int(sorted(os.listdir(fartdir))[0][5:-4])
-        for i in range(4):
-            farts_numpy = nn.predict()
-            for j in range(50):
-                last_fart += 1
-                filename = 'fart_%d'%(last_fart) + '.wav'
-                librosa.output.write_wav(fartdir + filename, farts_numpy[j,:,:].ravel(), 16000)
+    def deletion_thread_fun():
+        while True:
+            global delete_list
+            time.sleep(FART_CLEANUP_TIMER)
+            fart_files = natsort.natsorted(os.listdir(fartdir))
+            if len(delete_list) > 0:
+                print('RUNNING CLEANUP')
+                for wavfile in delete_list:
+                    try:
+                        os.remove(wavfile)
+                    except:
+                        print('Tried to delete ' + wavfile + ', but failed...')
+            delete_list = []
+
+    def generation_thread_fun(): #fartfactory
+        while True:
+            time.sleep(FART_GEN_TIMER)
+            fart_files = natsort.natsorted(os.listdir(fartdir))
+            if len(fart_files) == 0:
+                last_fart = 0
+            elif len(fart_files) < 200:
+                last_fart = int(fart_files[0][5:-4])
+            else:
+                last_fart = -1
+            if last_fart >= 0:
+                print('RUNNING GENERATION')
+                for i in range(4):
+                    farts_numpy = nn.predict()
+                    for j in range(50):
+                        last_fart += 1
+                        filename = 'fart_%d'%(last_fart) + '.wav'
+                        librosa.output.write_wav(fartdir + filename, farts_numpy[j,:,:].ravel(), 16000)
 
     def interrupt():
-        global checker_thread
-        checker_thread.cancel()
+        global gen_thread, del_thread
+        gen_thread.cancel()
+        del_thread.cancel()
 
-    def start_checker_thread():
-        global checker_thread
-        checker_thread = threading.Timer(FART_GEN_CHECKER_TIMER, delete_spent_farts_and_generate_new_farts, ())
-        checker_thread.start()
+    def start_background_threads():
+        global gen_thread, del_thread
+        gen_thread = threading.Thread(target=generation_thread_fun, daemon=True)
+        del_thread = threading.Thread(target=deletion_thread_fun, daemon=True)
+        gen_thread.start()
+        del_thread.start()
 
-    start_checker_thread()
+    start_background_threads()
     atexit.register(interrupt)
     return app
 
