@@ -7,6 +7,7 @@ import natsort
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask import Flask, send_from_directory
+import flask_monitoringdashboard as dashboard
 from config import *
 import tensorflow as tf
 import librosa
@@ -43,7 +44,7 @@ class fartNet:
     def predict(self):
         # Create 50 random latent vectors z
         _z = (np.random.rand(50, 100) * 2.) - 1
-
+        print(_z)
         # Synthesize G(z)
         for name in [n.name for n in tf.get_default_graph().as_graph_def().node]:
             print(name)
@@ -59,28 +60,30 @@ delete_list = []
 
 def create_app():
     app = Flask(__name__)
-
+    dashboard.bind(app)
     limiter = Limiter(
         app,
         key_func=get_remote_address,
-        default_limits=["1 per minute"]
+        default_limits=["1 per second"]
     )
 
     @app.route("/")
     def hello():
-        return "Hello, World!"
+        return 'Go here to get some farts: <br/> <a href="getfart">Get a new fart here (downloads a .wav audio file)</a> <br/>I don''t know why I made this but here it is. Trained on something like 2000 farts cultivated from weird corners of the internet by my friend Nelson. He is a champ and had to brave the depths of pornhub (we ran out of good farts on the internet so he had to sift through fart porn videos for sound clips LOL).'
 
     @app.route("/getfart" ,methods=['GET'])
-    @limiter.limit("1/second", error_message='chill, making you 50 farts already!')
+    @limiter.limit(".11/second", error_message='chill, making you 50 farts already!')
     def get_fart():
         global delete_list
-        if len(os.listdir(fartdir)) == 0:
-            generate_farts()
-        fart_files = natsort.natsorted(os.listdir(fartdir))
-        fart_to_fetch = int(fart_files[0][5:-4])  # fart with lowest # in name
-        filename = 'fart_%d'%(fart_to_fetch) + '.wav'
-        delete_list.append(fartdir + filename)
-        return send_from_directory(fartdir, filename, as_attachment=True, cache_timeout=0)
+        if len(os.listdir(fartdir)) > 0:
+            fart_files = natsort.natsorted(os.listdir(fartdir))
+            fart_to_fetch = int(fart_files[0][5:-4])  # fart with lowest # in name
+            filename = 'fart_%d'%(fart_to_fetch) + '.wav'
+            delete_list.append(fartdir + filename)
+            return send_from_directory(fartdir, filename, as_attachment=True, cache_timeout=0)
+        else:
+            return "Try again in a few minutes..."
+
 
     def deletion_thread_fun():
         while True:
