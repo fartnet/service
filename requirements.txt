@@ -28,7 +28,7 @@ cloudpickle==0.5.3
 colorama==0.3.7
 conda==4.7.12
 conda-package-handling==1.6.0
-cryptography==2.0.3
+cryptography==3.2
 cycler==0.10.0
 Cython==0.27.3
 darksky-weather==1.5.0
