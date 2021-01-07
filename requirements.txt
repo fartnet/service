@@ -96,7 +96,7 @@ llvmlite==0.27.1
 lockfile==0.12.2
 logger==1.4
 logging-py==0.3.17
-lxml==4.4.0
+lxml==4.6.2
 Markdown==2.6.11
 MarkupSafe==1.0
 matplotlib==2.2.2
